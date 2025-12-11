@@ -10,6 +10,70 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 //const passRegex = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$";
 
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication endpoints
+ */
+
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     summary: Register a new user
+ *     description: Creates a user account and returns a JWT token.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@test.com
+ *               password:
+ *                 type: string
+ *                 example: Pass1234
+ *               name:
+ *                 type: string
+ *                 example: Jihad
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User signed up successfully
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOi...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     salary:
+ *                       type: integer
+ *       400:
+ *         description: Invalid email or password
+ *       500:
+ *         description: Server error
+ */
 router.post('/signup', async (req, res) => {
   const { email, password, name } = req.body;
 
@@ -76,6 +140,57 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/signin:
+ *   post:
+ *     summary: Login a user
+ *     description: Authenticates user and returns a JWT token.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@test.com
+ *               password:
+ *                 type: string
+ *                 example: Pass1234
+ *     responses:
+ *       201:
+ *         description: User logged in successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User IN
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOi...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     email:
+ *                       type: string
+ *       400:
+ *         description: Missing credentials
+ *       401:
+ *         description: Invalid email or password
+ *       500:
+ *         description: Server error
+ */
 router.post('/signin', (req, res) => {
 	const {email, password} = req.body;
 	if (!email || !password) {
