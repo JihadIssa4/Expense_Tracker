@@ -124,29 +124,67 @@ router.post('/addExpense', middleware, (req, res) => {
 
 /**
  * @swagger
- * /api/user/updateSalary:
+ * tags:
+ *   name: Expenses
+ *   description: API endpoints for managing expenses
+ */
+
+/**
+ * @swagger
+ * /api/expenses/allExpenses/{categoryId}:
  *   get:
- *     summary: Get all expenses
+ *     summary: Get all expenses for a category
+ *     description: Retrieves all expenses for the authenticated user under a specific category.
  *     tags: [Expenses]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       description: getting all expenses for the users
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               salary:
- *                 type: number
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the expense category
  *     responses:
  *       200:
- *         description: All expenses retrieved
- *       400:
- *         description: Bad request
+ *         description: List of expenses retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   amount:
+ *                     type: number
+ *                     example: 50
+ *                   description:
+ *                     type: string
+ *                     example: "Groceries at supermarket"
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                     example: "2025-12-11"
+ *       404:
+ *         description: User or category not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found in expense_categories
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Database error
  */
 router.get('/allExpenses/:categoryId', middleware, (req, res) => {
 	const userId = req.userId;

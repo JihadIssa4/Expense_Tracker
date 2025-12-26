@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 5000
 
 # Run backend in dev mode
-CMD ["nodemon", "src/server.js"]
+CMD ["node", "src/server.js"]

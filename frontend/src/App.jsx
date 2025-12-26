@@ -1,30 +1,21 @@
-
-import React from 'react'
-import {
-  BrowserRouter as Router, 
-  Switch,
-  Route
-} from 'react-router-dom'
-import Layout from './layout/Layout'
-import Home from './components/pages/Home'
-import AboutUs from './components/pages/AboutUs'
-import ContactUs from './components/pages/ContactUs'
-
-import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ExpensePage from './pages/ExpensesPage';
+import CategoriesPage from './pages/CategoriesPage';
 
 function App() {
   return (
-    <div>
-      <Router>
-        <Layout>
-          <Switch>
-            <Route path={'/AboutUs'} component={AboutUs}></Route>
-            <Route path={'/ContactUs'} component={ContactUs}></Route>
-            <Route path={'/'} component={Home}></Route>
-          </Switch>
-        </Layout>
-      </Router>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/expenses" element={<ExpensePage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
