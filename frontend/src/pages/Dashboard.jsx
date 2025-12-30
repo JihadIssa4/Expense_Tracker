@@ -1,18 +1,13 @@
-import Navbar from "../components/layout/Navbar"
+import Layout from "../components/layout/Layout";
 
 function Dashboard() {
-    const user = {
-        firstName: "Jihad",
-        lastName: "Issa",
-    }
-    const handleLogout = () => {
-        console.log("Logout clicked");
-    }
-    return (
-        <div>
-            <Navbar title="Dashboard" user={user} onLogout={handleLogout}></Navbar>
-            <p className="p-6">Dashboard content goes here</p>
-        </div>
-    )
+  const user = {
+    firstName: "Jihad",
+    lastName: "Issa",
+  };
+  const handleLogout = () => {
+    console.log("Logout clicked");
+  };
+  return <div></div>;
 }
 export default Dashboard;
