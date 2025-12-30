@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../common/Button";
 
 function Navbar({ title, user, onLogout }) {
   const firstName = user?.firstName || "";
@@ -8,7 +9,7 @@ function Navbar({ title, user, onLogout }) {
       ? firstName[0].toUpperCase() + lastName[0].toUpperCase()
       : "";
   return (
-    <nav className="flex items-center justify-between mt-5 mr-6 p-4 bg-[var(--dark-card)] rounded-xl border border-[var(--dark-border)]">
+    <nav className="flex items-center justify-between mb-5 p-4 bg-[var(--dark-card)] rounded-xl border border-[var(--dark-border)]">
       <h1 className="text-xl font-semibold text-[var(--text-primary)]">
         {title}
       </h1>
@@ -25,12 +26,7 @@ function Navbar({ title, user, onLogout }) {
           {firstName} {lastName}
         </span>
 
-        <button
-          onClick={onLogout}
-          className="text-md px-3 py-1 rounded border border-[var(--dark-border)] text-[var(--text-primary)] hover:bg-red-600 hover:border-red-600 cursor-pointer transition duration-350"
-        >
-          Logout
-        </button>
+        <Button onClick={onLogout} variant="danger" children="Logout"></Button>
       </div>
     </nav>
   );

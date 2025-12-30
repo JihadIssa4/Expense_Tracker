@@ -1,5 +1,5 @@
+import Input from "../components/common/Input";
 function Analytics() {
-  console.log("hi");
   return (
     <div>
       <h1>Hello from the AnalyticsPage</h1>

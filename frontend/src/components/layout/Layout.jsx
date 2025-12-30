@@ -1,9 +1,13 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import { useEffect } from "react";
 
 function Layout() {
   const location = useLocation();
+  useEffect(() => {
+    console.log("Route changed to:", location.pathname);
+  }, [location.pathname]);
   const titles = {
     "/": "Dashboard",
     "/expenses": "Expenses",
@@ -28,7 +32,7 @@ function Layout() {
       </aside>
 
       {/* Right side: 80% */}
-      <div>
+      <div className="mt-5 mr-6">
         <Navbar title={title} user={user} onLogout={handleLogout} />
 
         <main>
