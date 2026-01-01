@@ -1,9 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../config/db');
-require('dotenv').config();
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("../config/db");
+const middleware = require("../middleware/authmiddleware");
+require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
@@ -22,7 +23,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * /api/auth/signup:
  *   post:
  *     summary: Register a new user
- *     description: Creates a user account and returns a JWT token.
+ *     description: Creates a user account.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -74,24 +75,24 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  *       500:
  *         description: Server error
  */
-router.post('/signup', async (req, res) => {
+router.post("/signup", async (req, res) => {
   const { email, password, name } = req.body;
 
   // Validation
   if (!email || !password || !name) {
     return res.status(400).json({
-      error: 'Email, password, and name are required'
+      error: "Email, password, and name are required",
     });
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
+    return res.status(400).json({ error: "Invalid email format" });
   }
 
   if (password.length < 8) {
     return res.status(400).json({
-      error: 'Password must be at least 8 characters'
+      error: "Password must be at least 8 characters",
     });
   }
 
@@ -99,44 +100,33 @@ router.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     db.run(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
+      "INSERT INTO users (email, password, name) VALUES (?, ?, ?)",
       [email, hashedPassword, name],
-      function(err) {
+      function (err) {
         // Handle errors
         if (err) {
-          if (err.message.includes('UNIQUE constraint failed')) {
+          if (err.message.includes("UNIQUE constraint failed")) {
             return res.status(400).json({
-              error: 'Email already exists'
+              error: "Email already exists",
             });
           }
-          console.error('Database error:', err);
-          return res.status(500).json({ error: 'Database error' });
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Database error" });
         }
-
-        // ✅ SUCCESS - Generate token HERE (inside callback)
-        const token = jwt.sign(
-          { userId: this.lastID },
-          JWT_SECRET,
-          { expiresIn: JWT_EXPIRES_IN }
-        );
-
         // ✅ Send response HERE (inside callback)
         res.status(201).json({
-          message: 'User signed up successfully',
-          token: token,
+          message: "User signed up successfully",
           user: {
             id: this.lastID,
             email: email,
             name: name,
-            salary: 0
-          }
+          },
         });
       }
     );
-
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Signup error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -191,53 +181,66 @@ router.post('/signup', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post('/signin', (req, res) => {
-	const {email, password} = req.body;
-	if (!email || !password) {
-		return res.status(400).json({
-			error: 'Email and password are required'
-		})
-	}
-	db.get('SELECT * FROM users WHERE email = ?', [email], async (err, row) =>
-	{
-		if(err)
-		{
-			console.error('Database error:', err);
-			return res.status(500).json({ error: 'Database error' });
-		}
+router.post("/signin", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({
+      error: "Email and password are required",
+    });
+  }
+  db.get("SELECT * FROM users WHERE email = ?", [email], async (err, row) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
 
-		if (!row)
-			return res.status(401).json({ error: 'Invalid email'});
+    if (!row) return res.status(401).json({ error: "Invalid email" });
 
-		try {
-			const validPassword = await bcrypt.compare(password, row.password);
-			if (!validPassword) {
-				return res.status(401).json({ 
-					error: 'Invalid email or password' 
-				});
-			}
-			else
-			{
-				console.log(row.id);
-				const token = jwt.sign(
-				{ userId: row.id },
-				JWT_SECRET,
-				{ expiresIn: JWT_EXPIRES_IN }
-				);
-				res.status(201).json({
-					message: 'User IN',
-					token: token,
-					user: {
-					id: this.lastID,
-					email: email,
-					}
-				});
-			}
-		}
-		catch (error) {
-        	console.error('Login error:', error);
-        	res.status(500).json({ error: 'Server error' });
-		}
-	});
-})
+    try {
+      const validPassword = await bcrypt.compare(password, row.password);
+      if (!validPassword) {
+        return res.status(401).json({
+          error: "Invalid email or password",
+        });
+      } else {
+        console.log(row.id);
+        const token = jwt.sign({ userId: row.id }, JWT_SECRET, {
+          expiresIn: JWT_EXPIRES_IN,
+        });
+        res.status(201).json({
+          message: "User IN",
+          token: token,
+          user: {
+            id: row.id,
+            email: row.email,
+            name: row.name,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+});
+
+router.get("/me", middleware, (req, res) => {
+  const userId = req.userId;
+
+  db.get(
+    "SELECT id, name, email FROM users WHERE id = ?",
+    [userId],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error" });
+      }
+      if (!row) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      return res.json(row);
+    }
+  );
+});
+
 module.exports = router;

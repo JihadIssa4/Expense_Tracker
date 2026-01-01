@@ -1,7 +1,9 @@
+import LoginForm from "../components/auth/LoginForm";
+
 function Login() {
   return (
-    <div>
-      <h1>Hello from the LoginPage</h1>
+    <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--text-primary)] flex items-center justify-center p-6">
+      <LoginForm></LoginForm>
     </div>
   );
 }

@@ -2,8 +2,8 @@ import React from "react";
 import Button from "../common/Button";
 
 function Navbar({ title, user, onLogout }) {
-  const firstName = user?.firstName || "";
-  const lastName = user?.lastName || "";
+  const fullName = user?.name || "";
+  const [firstName = "", lastName = ""] = fullName.split(" ");
   const initials =
     firstName && lastName
       ? firstName[0].toUpperCase() + lastName[0].toUpperCase()

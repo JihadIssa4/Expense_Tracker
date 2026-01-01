@@ -1,8 +1,9 @@
-function Register() {
+import SignupForm from "../components/auth/RegisterForm";
+function Signup() {
   return (
-    <div>
-      <h1>Hello from the RegisterPage</h1>
+    <div className="min-h-screen bg-[var(--dark-bg)] text-[var(--text-primary)] flex items-center justify-center p-6">
+      <SignupForm></SignupForm>
     </div>
   );
 }
-export default Register;
+export default Signup;

@@ -6,21 +6,32 @@ import ExpensePage from "./pages/ExpensesPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import Layout from "./components/layout/Layout";
 import Analytics from "./pages/AnalyticsPage";
+import LandingPage from "./pages/LandingPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/expenses" element={<ExpensePage />} />
-          <Route path="/categories" element={<CategoriesPage />} />
-        </Route>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signin" element={<LoginPage />} />
+          <Route path="/signup" element={<RegisterPage />} />
+
+          {/* Protected */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/expenses" element={<ExpensePage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

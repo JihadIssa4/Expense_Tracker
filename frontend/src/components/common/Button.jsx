@@ -6,8 +6,6 @@ function Button({
   className = "",
   type = "button",
 }) {
-  console.log("hi");
-  console.log(variant);
   const baseClasses =
     "px-4 py-2 rounded-lg font-medium transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
   const variants = {

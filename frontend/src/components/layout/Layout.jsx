@@ -1,29 +1,23 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 function Layout() {
   const location = useLocation();
-  useEffect(() => {
-    console.log("Route changed to:", location.pathname);
-  }, [location.pathname]);
+  const { logout, user } = useContext(AuthContext);
+  //const { user } = useContext(AuthContext);
+
+  useEffect(() => {}, [location.pathname]);
   const titles = {
-    "/": "Dashboard",
+    "/dashboard": "Dashboard",
     "/expenses": "Expenses",
     "/categories": "Categories",
     "/analytics": "Analytics",
   };
   const title = titles[location.pathname] || "";
 
-  const user = {
-    firstName: "Jihad",
-    lastName: "Issa",
-  };
-
-  const handleLogout = () => {
-    console.log("Logout clicked");
-  };
   return (
     <div className="min-h-screen grid md:grid-cols-[20%_80%] gap-4 bg-[var(--dark-bg)]">
       {/* Sidebar: 20% */}
@@ -33,7 +27,7 @@ function Layout() {
 
       {/* Right side: 80% */}
       <div className="mt-5 mr-6">
-        <Navbar title={title} user={user} onLogout={handleLogout} />
+        <Navbar title={title} user={user} onLogout={logout} />
 
         <main>
           <Outlet />

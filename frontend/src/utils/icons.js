@@ -1,0 +1,16 @@
+export const categoryIcons = {
+  Food: "🍔",
+  "Food & Dining": "🍔",
+  Transport: "🚗",
+  Transportation: "🚗",
+  Rent: "🏠",
+  Housing: "🏠",
+  Rentals: "🏠",
+  Shopping: "🛍️",
+  Entertainment: "🎮",
+  Health: "💊",
+  Education: "📚",
+  Utilities: "💡",
+  Travel: "✈️",
+  Other: "📂",
+};

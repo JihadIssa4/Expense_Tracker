@@ -21,7 +21,7 @@ function Sidebar() {
       {/* Navigation */}{" "}
       <nav className="flex flex-col gap-1">
         {" "}
-        <NavItem to="/" label="📊 Dashboard" />{" "}
+        <NavItem to="/dashboard" label="📊 Dashboard" />{" "}
         <NavItem to="/expenses" label="🧾 Expenses" />{" "}
         <NavItem to="/categories" label="📁 Categories" />{" "}
         <NavItem to="/analytics" label="📈 Analytics" />{" "}
