@@ -93,8 +93,8 @@ router.post("/addExpense", middleware, (req, res) => {
   const { category_id, amount, description, date } = req.body;
 
   db.get(
-    "SELECT user_id FROM expense_categories WHERE user_id = ?",
-    [userId],
+    "SELECT id FROM expense_categories WHERE id = ? AND user_id = ?",
+    [category_id, userId],
     (err, row) => {
       if (err) {
         console.error("Database error:", err);
@@ -102,28 +102,35 @@ router.post("/addExpense", middleware, (req, res) => {
       }
 
       if (!row) {
-        return res
-          .status(404)
-          .json({ error: "User not found in expense_categories" });
+        return res.status(403).json({ error: "Unauthorized category access" });
       }
 
-      const query =
-        "INSERT INTO expenses (category_id, amount, description, date) VALUES (?, ?, ?, ?)";
-      db.run(query, [category_id, amount, description, date], (err) => {
-        if (err) {
-          console.error("Database error:", err);
-          return res.status(500).json({ error: "Database error" });
-        }
+      const query = `
+        INSERT INTO expenses (user_id, category_id, amount, description, date)
+        VALUES (?, ?, ?, ?, ?)
+      `;
 
-        return res.json({
-          expense: {
-            category_id,
-            amount,
-            description,
-            date,
-          },
-        });
-      });
+      db.run(
+        query,
+        [userId, category_id, amount, description, date],
+        function (err) {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Database error" });
+          }
+
+          return res.status(201).json({
+            expense: {
+              id: this.lastID,
+              user_id: userId,
+              category_id,
+              amount,
+              description,
+              date,
+            },
+          });
+        }
+      );
     }
   );
 });
@@ -212,8 +219,8 @@ router.get("/allExpenses/:categoryId", middleware, (req, res) => {
 
       // 2. Fetch expenses for that category
       db.all(
-        "SELECT id, category_id, amount, description, date FROM expenses WHERE category_id = ?",
-        [categoryId],
+        "SELECT id, category_id, amount, description, date FROM expenses WHERE category_id = ? AND user_id = ? ORDER BY date DESC",
+        [categoryId, userId],
         (err, rows) => {
           if (err) {
             console.error(err);
@@ -223,6 +230,204 @@ router.get("/allExpenses/:categoryId", middleware, (req, res) => {
           res.status(200).json(rows);
         }
       );
+    }
+  );
+});
+
+/**
+ * @swagger
+ * /api/expenses:
+ *   get:
+ *     summary: Get all expenses for the authenticated user
+ *     tags: [Expenses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user expenses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   amount:
+ *                     type: number
+ *                   description:
+ *                     type: string
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                   category_id:
+ *                     type: integer
+ *                   category_name:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Database error
+ */
+router.get("/", middleware, (req, res) => {
+  const userId = req.userId;
+
+  const query = `
+    SELECT
+      e.id,
+      e.amount,
+      e.description,
+      e.date,
+      e.category_id,
+      c.name AS category_name
+    FROM expenses e
+    JOIN expense_categories c ON e.category_id = c.id
+    WHERE e.user_id = ?
+    ORDER BY e.date DESC
+  `;
+
+  db.all(query, [userId], (err, rows) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.status(200).json(rows);
+  });
+});
+
+/**
+ * @swagger
+ * /api/expenses/{id}:
+ *   put:
+ *     summary: Update an expense
+ *     tags: [Expenses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - category_id
+ *               - amount
+ *               - description
+ *               - date
+ *     responses:
+ *       200:
+ *         description: Expense updated successfully
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Expense not found
+ */
+router.put("/:id", middleware, (req, res) => {
+  const userId = req.userId;
+  const expenseId = req.params.id;
+  const { category_id, amount, description, date } = req.body;
+
+  // 1. Verify expense ownership
+  db.get(
+    "SELECT id FROM expenses WHERE id = ? AND user_id = ?",
+    [expenseId, userId],
+    (err, expense) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (!expense) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+
+      // 2. Verify category ownership
+      db.get(
+        "SELECT id FROM expense_categories WHERE id = ? AND user_id = ?",
+        [category_id, userId],
+        (err, category) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Database error" });
+          }
+
+          if (!category) {
+            return res
+              .status(403)
+              .json({ error: "Unauthorized category access" });
+          }
+
+          // 3. Update expense
+          db.run(
+            `UPDATE expenses
+             SET category_id = ?, amount = ?, description = ?, date = ?
+             WHERE id = ? AND user_id = ?`,
+            [category_id, amount, description, date, expenseId, userId],
+            function (err) {
+              if (err) {
+                console.error(err);
+                return res.status(500).json({ error: "Database error" });
+              }
+
+              res.status(200).json({
+                message: "Expense updated successfully",
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+/**
+ * @swagger
+ * /api/expenses/{id}:
+ *   delete:
+ *     summary: Delete an expense
+ *     tags: [Expenses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Expense deleted successfully
+ *       404:
+ *         description: Expense not found
+ */
+router.delete("/:id", middleware, (req, res) => {
+  const userId = req.userId;
+  const expenseId = req.params.id;
+
+  db.run(
+    "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+    [expenseId, userId],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+
+      res.status(200).json({
+        message: "Expense deleted successfully",
+      });
     }
   );
 });

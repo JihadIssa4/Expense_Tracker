@@ -1,7 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const db = require('../config/db');
-const middleware = require('../middleware/authmiddleware');
+const db = require("../config/db");
+const middleware = require("../middleware/authmiddleware");
 
 /**
  * @swagger
@@ -63,24 +63,28 @@ const middleware = require('../middleware/authmiddleware');
  *                   type: string
  *                   example: Error inserting data
  */
-router.post('/addCategory', middleware, (req, res) => {
-    const userId = req.userId;
-    const name = req.body.name;
-    const amount = req.body.expected_amount;
+router.post("/addCategory", middleware, (req, res) => {
+  const userId = req.userId;
+  const name = req.body.name;
+  const amount = req.body.expected_amount;
 
-    db.run(
-        'INSERT INTO expense_categories (name, expected_amount, user_id) VALUES (?, ?, ?)',
-        [name, amount, userId],
-        (err) => {
-            if (err) {
-                console.error('Inserting failed');
-                return res.status(500).json({ error: 'Error inserting data' });
-            }
-            return res.status(201).json({ id: userId, name: name, amount: amount });
-        }
-    );
+  db.run(
+    "INSERT INTO expense_categories (name, expected_amount, user_id) VALUES (?, ?, ?)",
+    [name, amount, userId],
+    (err) => {
+      if (err) {
+        console.error("Inserting failed");
+        return res.status(500).json({ error: "Error inserting data" });
+      }
+      return res.status(201).json({
+        category_id: this.lastId,
+        user_id: userId,
+        name: name,
+        amount: amount,
+      });
+    }
+  );
 });
-
 
 /**
  * @swagger
@@ -130,10 +134,10 @@ router.post('/addCategory', middleware, (req, res) => {
  *                   type: string
  *                   example: Database error
  */
-router.get('/allCategories', middleware, (req, res) => {
-    const userId = req.userId;
+router.get("/allCategories", middleware, (req, res) => {
+  const userId = req.userId;
 
-    const query = `
+  const query = `
         SELECT expense_categories.id,
                expense_categories.name,
                expense_categories.expected_amount,
@@ -144,19 +148,18 @@ router.get('/allCategories', middleware, (req, res) => {
         GROUP BY expense_categories.id
     `;
 
-    db.all(query, [userId], (err, categories) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
+  db.all(query, [userId], (err, categories) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
 
-        res.json({
-            categories: categories,
-            count: categories.length,
-        });
+    res.json({
+      categories: categories,
+      count: categories.length,
     });
+  });
 });
-
 
 /**
  * @swagger
@@ -196,17 +199,94 @@ router.get('/allCategories', middleware, (req, res) => {
  *                   type: string
  *                   example: Database error
  */
-router.delete('/delCategory/:id', middleware, (req, res) => {
-    const id = req.params.id;
+router.delete("/delCategory/:id", middleware, (req, res) => {
+  const id = req.params.id;
 
-    db.run('DELETE FROM expense_categories WHERE id = ?', [id], (err) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
+  db.run("DELETE FROM expense_categories WHERE id = ?", [id], (err) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
 
-        return res.status(200).json({ success: 'success' });
-    });
+    return res.status(200).json({ success: "success" });
+  });
+});
+
+/**
+ * @swagger
+ * /api/categories/updateCategory/{id}:
+ *   put:
+ *     summary: Update an expense category
+ *     description: Updates a category name and expected amount for the authenticated user.
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Category ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - expected_amount
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Groceries
+ *               expected_amount:
+ *                 type: number
+ *                 example: 400
+ *     responses:
+ *       200:
+ *         description: Category updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: string
+ *                   example: success
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Database error
+ */
+router.put("/updateCategory/:id", middleware, (req, res) => {
+  const userId = req.userId;
+  const categoryId = req.params.id;
+  const { name, expected_amount } = req.body;
+
+  if (!name || expected_amount <= 0) {
+    return res.status(400).json({ error: "Invalid input data" });
+  }
+
+  const query = `
+    UPDATE expense_categories
+    SET name = ?, expected_amount = ?
+    WHERE id = ? AND user_id = ?
+  `;
+
+  db.run(query, [name, expected_amount, categoryId, userId], function (err) {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    return res.status(200).json({ success: "success" });
+  });
 });
 
 module.exports = router;

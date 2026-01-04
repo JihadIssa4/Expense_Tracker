@@ -19,6 +19,8 @@ function Input({ label, error, className = "", id, ...props }) {
           focus:outline-none
           focus:ring-2
           focus:ring-blue-500
+          transition
+          duration-200
         `}
         {...props}
       />

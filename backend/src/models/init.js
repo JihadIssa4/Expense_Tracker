@@ -22,13 +22,16 @@ function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       category_id INTEGER NOT NULL,
       amount REAL NOT NULL,
       description TEXT,
       date DATE DEFAULT CURRENT_DATE,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (category_id) REFERENCES expense_categories(id) ON DELETE CASCADE
     );
+
 
     CREATE TABLE IF NOT EXISTS salaries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

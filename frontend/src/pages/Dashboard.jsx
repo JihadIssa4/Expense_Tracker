@@ -42,13 +42,14 @@ function Dashboard() {
         api.authRequest("/categories/allCategories"),
         api.authRequest("/salary/current"),
       ]);
+
       if (![userRes, categoriesRes, salaryRes].every((r) => r.ok)) {
         throw new Error("Failed to load dashboard data");
       }
       const userData = await userRes.json();
       const categoriesData = await categoriesRes.json();
-      const categoriesArray = categoriesData.categories;
       const salaryData = await salaryRes.json();
+      const categoriesArray = categoriesData.categories;
 
       setUser(userData);
       setCategories(categoriesArray);
@@ -74,6 +75,8 @@ function Dashboard() {
 
   if (loading) return <div>Loading dashboard...</div>;
 
+  if (salary === null) setSalary(0);
+
   if (error) {
     return (
       <div>
@@ -81,9 +84,6 @@ function Dashboard() {
         <button onClick={fetchDashboardData}>Retry</button>
       </div>
     );
-  }
-  if (salary == null) {
-    return <div>No salary set yet</div>;
   }
   const allExpenses = Object.values(expensesByCategory).flat();
   const totalExpenses = allExpenses.reduce(
@@ -94,6 +94,7 @@ function Dashboard() {
     categories.map((cat) => [cat.id, cat.name])
   );
   const getCategoryIcon = (categoryName) => categoryIcons[categoryName] || "📂";
+
   const expenses_percentage = (totalExpenses * 100) / salary;
   const remainingBudget = Number(salary) - totalExpenses;
   const remaining_percentage = (remainingBudget * 100) / salary;
@@ -202,7 +203,7 @@ function Dashboard() {
           </thead>
 
           <tbody>
-            {allExpenses.map((expense) => (
+            {allExpenses.slice(0, 3).map((expense) => (
               <tr
                 key={expense.id}
                 className="border-b border-[var(--dark-border)] hover:bg-[rgba(59,130,246,0.05)]"
@@ -228,42 +229,44 @@ function Dashboard() {
         <h2 className="text-[18px] mb-4 text-[var(--text-primary)] font-bold">
           Budget Overview
         </h2>
-        {categories.map((cat) => {
-          const rawPercent = (cat.actual_spent / cat.expected_amount) * 100;
-          const percentUsed = Math.min(rawPercent, 100);
-          const progressColor =
-            rawPercent < 80
-              ? "bg-green-500"
-              : rawPercent <= 100
-                ? "bg-yellow-500"
-                : "bg-red-500";
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+          {categories.map((cat) => {
+            const rawPercent = (cat.actual_spent / cat.expected_amount) * 100;
+            const percentUsed = Math.min(rawPercent, 100);
+            const progressColor =
+              rawPercent < 80
+                ? "bg-green-500"
+                : rawPercent <= 100
+                  ? "bg-yellow-500"
+                  : "bg-red-500";
 
-          return (
-            <Card className="mb-3" key={cat.id}>
-              <div className="flex items-center mb-2">
-                <span>{getCategoryIcon(cat.name)}</span>
-                <span className="ml-2 text-[var(--text-primary)] text-xl font-bold">
-                  {cat.name}
-                </span>
-              </div>
+            return (
+              <Card className="mb-3" key={cat.id}>
+                <div className="flex items-center mb-2">
+                  <span>{getCategoryIcon(cat.name)}</span>
+                  <span className="ml-2 text-[var(--text-primary)] text-xl font-bold">
+                    {cat.name}
+                  </span>
+                </div>
 
-              <div className="text-sm text-[#94a3b8] mb-3">
-                {cat.actual_spent} / {cat.expected_amount}
-              </div>
-              <div className="w-full mb-3 h-2 bg-[var(--dark-border)] rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${progressColor} transition-all duration-300`}
-                  style={{
-                    width: `${percentUsed}%`,
-                  }}
-                />
-              </div>
-              <div className="text-[12px] text-[#94a3b8]">
-                {percentUsed}% used {percentUsed > 100 ? "- Over Budget" : ""}
-              </div>
-            </Card>
-          );
-        })}
+                <div className="text-sm text-[#94a3b8] mb-3">
+                  {cat.actual_spent} / {cat.expected_amount}
+                </div>
+                <div className="w-full mb-3 h-2 bg-[var(--dark-border)] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${progressColor} transition-all duration-300`}
+                    style={{
+                      width: `${percentUsed}%`,
+                    }}
+                  />
+                </div>
+                <div className="text-[12px] text-[#94a3b8]">
+                  {percentUsed}% used {percentUsed > 100 ? "- Over Budget" : ""}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </Card>
     </main>
   );
